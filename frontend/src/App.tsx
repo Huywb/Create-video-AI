@@ -24,6 +24,7 @@ function App() {
 				<Route path='/loading' element={<Loading />} />
 				<Route path='/result/:projectId' element={<Result />} />
 				<Route path='/my-generations' element={<MyGenerations />} />
+				<Route path='/loading' element={<Loading />} />
 			</Routes>
 
 			<Footer />
