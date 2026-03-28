@@ -9,10 +9,12 @@ import Generator from './pages/Generator';
 import Result from './pages/Result';
 import Loading from './pages/Loading';
 import MyGenerations from './pages/MyGenerations';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
 	return (
 		<>
+			<Toaster toastOptions={{style: {background: '#333', color: '#fff'}}}></Toaster>
 			<SoftBackdrop />
 			<Navbar />
 
