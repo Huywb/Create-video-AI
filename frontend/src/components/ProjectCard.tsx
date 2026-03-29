@@ -3,19 +3,52 @@ import type { Project } from "../types"
 import { useState } from "react"
 import { EllipsisIcon, ImageIcon, Loader2Icon, PlaySquare, Share2Icon, Trash2Icon } from "lucide-react"
 import { GhostButton, PrimaryButton } from "./Buttons"
+import { useAuth } from "@clerk/react"
+import api from "../config/axios"
+import toast from "react-hot-toast"
 
 const ProjectCard = ({ gen, setGenerations, forCommunity = false }: { gen: Project, setGenerations: React.Dispatch<React.SetStateAction<Project[]>>, forCommunity?: boolean }) => {
+
+
+    const { getToken } = useAuth()
+
 
     const navigate = useNavigate()
     const [menuOpen, setMenuOpen] = useState(false)
 
-    const handleDelete =async (id: string) => {
+    const handleDelete = async (id: string) => {
         if (!window.confirm('Are you sure you want to delete this generation?')) return
-        console.log(id)
+
+        try {
+            const token = await getToken()
+            const res = await api.delete(`/api/v1/project/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            setGenerations((generation) => generation.filter((gen) => gen.id !== id))
+            toast.success(res.data.message)
+
+        } catch (error: any) {
+            toast.error(error.message)
+            console.log(error.message)
+        }
     }
 
     const handlePublish = async (projectId: string) => {
-        console.log(projectId)
+        try {
+            const token = await getToken()
+            const res = await api.get(`/api/v1/user/publish/${projectId}`,{
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            setGenerations((generation)=> generation.map(gen => gen.id === projectId ? {...gen, isPublished: res.data.isPublished} : gen))
+            toast.success(res.data.isPublished ? 'Project published' : 'Project unPublished')
+        } catch (error : any) {
+            toast.error(error.message)
+            console.log(error.message)
+        }
     }
 
     return (
@@ -61,8 +94,8 @@ const ProjectCard = ({ gen, setGenerations, forCommunity = false }: { gen: Proje
 
                     {!forCommunity && (
                         <div
-                            onMouseDownCapture={()=>{setMenuOpen(true)}}
-                            onMouseLeave={()=>{setMenuOpen(false)}}
+                            onMouseDownCapture={() => { setMenuOpen(true) }}
+                            onMouseLeave={() => { setMenuOpen(false) }}
                             className="absolute right-3 top-3 sm:opacity-0 group-hover:opacity-100 transition flex items-center gap-2">
                             <div className="absolute top-3 right-3">
                                 <EllipsisIcon className="ml-auto bg-black/10 rounded-full p-1 size-7"></EllipsisIcon>
@@ -83,13 +116,13 @@ const ProjectCard = ({ gen, setGenerations, forCommunity = false }: { gen: Proje
                                     }
 
                                     {(gen.generatedImage || gen.generatedVideo) &&
-                                        <button onClick={()=>navigator.share({url: gen.generatedVideo || gen.generatedImage, title: gen.productName, text: gen.productDescription})} 
-                                        className="w-full flex gap-2 items-center px-4 py-2 hover:bg-black/10 cursor-pointer">
+                                        <button onClick={() => navigator.share({ url: gen.generatedVideo || gen.generatedImage, title: gen.productName, text: gen.productDescription })}
+                                            className="w-full flex gap-2 items-center px-4 py-2 hover:bg-black/10 cursor-pointer">
                                             <Share2Icon size={14}></Share2Icon>Share
                                         </button>
                                     }
 
-                                    <button onClick={()=>handleDelete(gen.id)} className="w-full flex gap-2 items-center px-4 py-2
+                                    <button onClick={() => handleDelete(gen.id)} className="w-full flex gap-2 items-center px-4 py-2
                                      hover:bg-red-950/10 text-red-400 cursor-pointer">
                                         <Trash2Icon size={14}></Trash2Icon>Delete
                                     </button>
@@ -140,10 +173,10 @@ const ProjectCard = ({ gen, setGenerations, forCommunity = false }: { gen: Proje
                     {!forCommunity && (
                         <div className="mt-4 grid grid-cols-2 gap-3">
                             <GhostButton className="text-xs justify-center"
-                                onClick={()=>{navigate(`/result/${gen.id}`); scrollTo(0,0)}}>
-                                    View Details
+                                onClick={() => { navigate(`/result/${gen.id}`); scrollTo(0, 0) }}>
+                                View Details
                             </GhostButton>
-                            <PrimaryButton onClick={()=> handlePublish(gen.id)} className="rounded-md">
+                            <PrimaryButton onClick={() => handlePublish(gen.id)} className="rounded-md">
                                 {gen.isPublished ? 'Unpublish' : 'Publish'}
                             </PrimaryButton>
                         </div>
