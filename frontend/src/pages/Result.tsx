@@ -2,31 +2,76 @@ import { useEffect, useState } from "react"
 import type { Project } from "../types"
 import { dummyGenerations } from "../assets/assets"
 import { ImageIcon, Loader2Icon, RefreshCwIcon, SparkleIcon, Video, VideoIcon } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { GhostButton, PrimaryButton } from "../components/Buttons"
+import { useAuth, useUser } from "@clerk/react"
+import api from "../config/axios"
+import toast from "react-hot-toast"
 
 const Result = () => {
+
+  const {projectId} = useParams()
+  const {getToken} = useAuth()
+  const {user,isLoaded} = useUser()
+  const navigate = useNavigate()
 
   const [project, setProject] = useState({} as Project)
   const [loading, setLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
 
   const fetchProjectData = async () => {
-    setTimeout(()=>{
-      setProject(dummyGenerations[0])
+    try {
+      const token = await getToken()
+      const res = await api.get(`/api/v1/user/projects/${projectId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      setProject(res.data.project)
+      setIsGenerating(res.data.project.isGenerating)
       setLoading(false)
-    },3000)
+    } catch (error : any) {
+      toast.error(error.message)
+      console.log(error.message)
+    }
   }
 
   const handleGenerationVideo = async () => {
     setIsGenerating(true)
+    try {
+      const token = await getToken()
+      const res = await api.post('/api/v1/project/video',{projectId},{
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      setProject(prev => ({...prev, generatedVideo: res.data.videoUrl,isGenerating: false}))
+
+      toast.success(res.data.message)
+      setIsGenerating(false)
+    } catch (error: any) {
+      toast.error(error.message)
+      console.log(error.message)
+    }
   }
 
   useEffect(()=>{
-    fetchProjectData()
-  },[])
+    if(user && !project.id){
+      fetchProjectData()
+    }else if(isLoaded && !user){
+      navigate('/')
+    }
+  },[user])
 
-
+  useEffect(()=>{
+    if(user && isGenerating){
+      const interval = setInterval(()=>{
+        fetchProjectData()
+      },10000)
+      return ()=> clearInterval(interval)
+    }
+  },[user,isGenerating])
 
   return loading ? (
     <div className="h-screen w-full flex items-center justify-center">
