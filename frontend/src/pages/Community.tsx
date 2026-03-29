@@ -2,8 +2,9 @@ import { useEffect, useState } from "react"
 import type { Project } from "../types"
 import { dummyGenerations } from "../assets/assets"
 import { Loader2, Loader2Icon } from "lucide-react"
-import { div } from "framer-motion/client"
 import ProjectCard from "../components/ProjectCard"
+import toast from "react-hot-toast"
+import api from "../config/axios"
 
 const Community = () => {
 
@@ -11,10 +12,14 @@ const Community = () => {
   const [loading, setLoading] = useState(true)
 
   const fetchProjects = async () => {
-    setTimeout(() => {
-      setProjects(dummyGenerations)
+    try {
+      const res = await api.get('/api/v1/project/published')
+      setProjects(res.data.data)
       setLoading(false)
-    }, 3000)
+    } catch (error : any) {
+      toast.error(error.message)
+      console.log(error.message)
+    }
 
   }
 
