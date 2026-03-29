@@ -3,8 +3,17 @@ import Title from "../components/Title"
 import UploadZone from "../components/UploadZone"
 import { Loader2Icon, RectangleHorizontal, RectangleVertical, Wand2Icon } from "lucide-react"
 import { PrimaryButton } from "../components/Buttons"
+import { useAuth, useUser } from "@clerk/react"
+import { useNavigate } from "react-router-dom"
+import toast from "react-hot-toast"
+import api from "../config/axios"
 
 const Generator = () => {
+
+    const {user} =useUser()
+    const {getToken} = useAuth()
+
+    const navigate = useNavigate()
 
     const [name,setName] = useState('')
     const [productName,setProductName] = useState('')
@@ -26,12 +35,43 @@ const Generator = () => {
     }
 
     const handleGenerate =async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-    }
+        e.preventDefault();
+        if(!user) return toast('Please login to generate')
+        if(!productImage || !modelImage || !name || !productName || !aspectRatio) return toast("All field are required")
+            try {
+                
+                setIsGenerating(true)
+                const formData = new FormData()
+                
+                formData.append('name',name)
+                formData.append('productName',productName)
+                formData.append('productDescription',productDescription)
+                formData.append('userPrompt',userPrompt)
+                formData.append('aspectRatio',aspectRatio)
+                formData.append('images',productImage)
+                formData.append('images',modelImage)
+
+                const token = await getToken()
+
+                const res = await api.post('/api/v1/project/create',formData,{
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+
+                toast.success(res.data.message)
+                navigate('/result/' + res.data.projectId)
+
+            } catch (error : any) {
+                setIsGenerating(false)
+                toast.error(error.message)
+            }
+    
+        }   
 
     return (
         <div className="min-h-screen text-white p-6 md:p-12 mt-28">
-            <form className="max-w-4xl mx-auto mb-40">
+            <form onSubmit={handleGenerate} className="max-w-4xl mx-auto mb-40">
                 <Title
                     heading="Create In-Content Image"
                     description="Upload your model and product image to generate stunning video, short-form videos and social media posts"
