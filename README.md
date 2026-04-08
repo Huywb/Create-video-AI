@@ -51,18 +51,20 @@ AI-Gen-Studio
 │   └── server.ts        # File chạy server chính
 ```
 ## Hướng dẫn Cài đặt
-  git clone [https://github.com/Huywb/your-repo-name.git](https://github.com/Huywb/your-repo-name.git)
+  git clone https://github.com/Huywb/Create-video-AI/tree/main
   
 ## Client:
-  cd reactjs
-  npm install
-  npm run dev
+
+cd reactjs
+npm install
+npm run dev
   
 ## Server:
-  cd backend
-  npm install
-  npx prisma generate
-  npm run server
+
+cd backend
+npm install
+npx prisma generate
+npm run server
   
 ## Thiết lập biến môi trường (.env)
 
